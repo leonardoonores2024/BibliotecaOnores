@@ -1,0 +1,10 @@
+# Secretos - NO commitear
+.env
+.env.*
+opencode.env
+*.env
+
+# node_modules / builds
+node_modules
+dist
+dist-ssr
