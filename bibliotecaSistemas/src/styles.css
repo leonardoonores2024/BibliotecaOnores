@@ -1,0 +1,386 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+body {
+  background-color: #1e1e1e;
+  color: #333333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  background-color: #6b0c24;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background-color: #ffffff;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid #e5e7eb;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 0 8px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background-color: #6b0c24;
+  color: #ffffff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  color: #881337;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.nav-item.active {
+  background-color: #6b0c24;
+  color: #ffffff;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.user-role {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 32px;
+  background-color: #6b0c24;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: #fbcfe8;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.btn-history {
+  background-color: #ffffff;
+  color: #111827;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Metrics Cards Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 16px;
+  position: relative;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9a3412;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-icon {
+  color: #374151;
+}
+
+.metric-body {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.badge-pink {
+  background-color: #ffe4e6;
+  color: #be123c;
+}
+
+.badge-gray {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.badge-red {
+  background-color: #ffe4e6;
+  color: #9f1239;
+}
+
+/* Content Grid */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 20px;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+  margin-bottom: 20px;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #374151;
+  outline: none;
+}
+
+.btn-submit {
+  width: 100%;
+  background-color: #6b0c24;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+/* Table */
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.btn-link {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.table-container {
+  width: 100%;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1.4fr 1.4fr 1fr 1fr 0.2fr;
+  background-color: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1.4fr 1fr 1fr 0.2fr;
+  padding: 12px;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12px;
+}
+
+.student-name {
+  font-weight: 700;
+  color: #111827;
+}
+
+.student-course {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.book-title {
+  color: #374151;
+}
+
+.date {
+  color: #374151;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  display: inline-block;
+  width: fit-content;
+}
+
+.status-entregado {
+  background-color: #111827;
+  color: #ffffff;
+}
+
+.status-prestamo {
+  background-color: #b45309;
+  color: #ffffff;
+}
+
+.status-vencido {
+  background-color: #881337;
+  color: #ffffff;
+}
+
+.more-options {
+  color: #9ca3af;
+  font-weight: bold;
+  cursor: pointer;
+}
