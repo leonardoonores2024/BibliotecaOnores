@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IconLibro, IconHistorial, IconAlerta, IconPlusCircle, IconTresPuntos,
 } from '../components/Icons'
+import { useBiblioteca, fechaCorta } from '../context/BibliotecaContext.jsx'
 
-const PRESTAMOS_INICIALES = [
-  { id: 1, alumno: 'Tomás Giménez', curso: '4to Año A', libro: 'Rayuela', fecha: '24 Oct 2024', estado: 'Entregado', clase: 'entregado' },
-  { id: 2, alumno: 'Valentina Ortiz', curso: '6to Año B', libro: 'Don Quijote', fecha: '23 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
-  { id: 3, alumno: 'Mateo Silva', curso: '3er Año C', libro: 'El Principito', fecha: '18 Oct 2024', estado: 'Vencido', clase: 'vencido' },
-  { id: 4, alumno: 'Camila Franco', curso: '5to Año A', libro: 'Fahrenheit 451', fecha: '22 Oct 2024', estado: 'Entregado', clase: 'entregado' },
-  { id: 5, alumno: 'Bautista Herrera', curso: '2do Año B', libro: 'La Sombra del Viento', fecha: '21 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
+const PRESTAMOS_MAQUETA = [
+  { id: 'p1', alumno: 'Tomás Giménez', curso: '4to Año A', libro: 'Rayuela', fecha: '24 Oct 2024', estado: 'Entregado', clase: 'entregado' },
+  { id: 'p2', alumno: 'Valentina Ortiz', curso: '6to Año B', libro: 'Don Quijote', fecha: '23 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
+  { id: 'p3', alumno: 'Mateo Silva', curso: '3er Año C', libro: 'El Principito', fecha: '18 Oct 2024', estado: 'Vencido', clase: 'vencido' },
+  { id: 'p4', alumno: 'Camila Franco', curso: '5to Año A', libro: 'Fahrenheit 451', fecha: '22 Oct 2024', estado: 'Entregado', clase: 'entregado' },
+  { id: 'p5', alumno: 'Bautista Herrera', curso: '2do Año B', libro: 'La Sombra del Viento', fecha: '21 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
 ]
 
 const METRICAS = [
@@ -26,29 +27,112 @@ const CAMPOS = [
   { clave: 'fecha', label: 'Fecha de Devolución Estimada', ph: 'DD / MM / AAAA' },
 ]
 
-export default function Dashboard() {
-  const [form, setForm] = useState({ alumno: '', curso: '', libro: '', fecha: '' })
-  const [prestamos, setPrestamos] = useState(PRESTAMOS_INICIALES)
+const CLASE = { 'En Préstamo': 'prestamo', Entregado: 'entregado', Vencido: 'vencido' }
 
-  const set = (clave) => (e) => setForm((f) => ({ ...f, [clave]: e.target.value }))
+const VACIO = { alumno: '', curso: '', libro: '', fecha: '' }
+
+/**
+ * Formulario de préstamo. Se monta con `key` según la selección para que
+ * el campo del libro venga precargado al llegar desde el catálogo.
+ */
+function FormularioPrestamo({ seleccion }) {
+  const { buscar, prestar, setSeleccion } = useBiblioteca()
+  const [form, setForm] = useState(() => (seleccion ? { ...VACIO, libro: seleccion.titulo } : VACIO))
+  const [aviso, setAviso] = useState(() =>
+    seleccion ? { tipo: 'info', texto: `Préstamo de "${seleccion.titulo}" · ISBN ${seleccion.isbn}` } : null,
+  )
+  // Sigue mostrando el botón de cancelar aunque la preselección ya se usó.
+  const [preseleccionActiva, setPreseleccionActiva] = useState(!!seleccion)
+
+  // Al salir del panel se limpia la selección del contexto.
+  useEffect(() => () => setSeleccion(null), [setSeleccion])
+
+  const set = (clave) => (e) => {
+    setForm((f) => ({ ...f, [clave]: e.target.value }))
+    if (aviso) setAviso(null)
+  }
 
   const enviar = (e) => {
     e.preventDefault()
-    if (!form.alumno || !form.libro) return
-    setPrestamos((p) => [
-      {
-        id: Date.now(),
-        alumno: form.alumno,
-        curso: form.curso || '1er Año',
-        libro: form.libro,
-        fecha: form.fecha || 'Hoy',
-        estado: 'En Préstamo',
-        clase: 'prestamo',
-      },
-      ...p,
-    ])
-    setForm({ alumno: '', curso: '', libro: '', fecha: '' })
+
+    if (!form.alumno.trim()) {
+      setAviso({ tipo: 'error', texto: 'Ingresá el nombre del alumno.' })
+      return
+    }
+
+    const r = buscar(form.libro)
+    if (!r.ok) {
+      setAviso({ tipo: 'error', texto: r.error })
+      return
+    }
+
+    const restantes = r.libro.disponibles - 1
+    prestar({ libro: r.libro, alumno: form.alumno.trim(), curso: form.curso, fecha: form.fecha })
+    setAviso({
+      tipo: 'ok',
+      texto: `Préstamo registrado: "${r.libro.titulo}" — quedan ${restantes} disponibles.`,
+    })
+    setForm(VACIO)
+    setPreseleccionActiva(false)
   }
+
+  return (
+    <section className="card form-card">
+      <h2 className="card-title">Registrar Nuevo Préstamo</h2>
+      <p className="card-subtitle">Complete los campos para asignar un libro o recurso bibliográfico.</p>
+      <hr className="rule" />
+
+      <form className="form-fields" onSubmit={enviar}>
+        {CAMPOS.map(({ clave, label, ph }) => (
+          <div className="form-group" key={clave}>
+            <label className="form-label" htmlFor={clave}>{label}</label>
+            <input
+              id={clave}
+              className="form-input"
+              placeholder={ph}
+              value={form[clave]}
+              onChange={set(clave)}
+            />
+          </div>
+        ))}
+
+        {aviso && <p className={`aviso aviso-${aviso.tipo}`} role="status">{aviso.texto}</p>}
+
+        {preseleccionActiva && (
+          <button
+            type="button"
+            className="btn btn-outline btn-sm btn-cancelar"
+            onClick={() => { setForm(VACIO); setAviso(null); setPreseleccionActiva(false); setSeleccion(null) }}
+          >
+            Cancelar preselección
+          </button>
+        )}
+
+        <button type="submit" className="btn btn-maron">
+          <IconPlusCircle size={16} />
+          Registrar Préstamo
+        </button>
+      </form>
+    </section>
+  )
+}
+
+export default function Dashboard() {
+  const { movimientos, seleccion } = useBiblioteca()
+
+  const filas = [
+    ...movimientos.slice(0, 5).map((m) => ({
+      id: m.id,
+      alumno: m.alumno,
+      curso: m.curso,
+      libro: m.libro,
+      fecha: fechaCorta(m.fecha),
+      estado: m.estado,
+      clase: CLASE[m.estado] ?? 'prestamo',
+      nuevo: true,
+    })),
+    ...PRESTAMOS_MAQUETA,
+  ]
 
   return (
     <main className="main main-dashboard">
@@ -79,32 +163,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid-dashboard">
-        <section className="card form-card">
-          <h2 className="card-title">Registrar Nuevo Préstamo</h2>
-          <p className="card-subtitle">
-            Complete los campos para asignar un libro o recurso bibliográfico.
-          </p>
-          <hr className="rule" />
-
-          <form className="form-fields" onSubmit={enviar}>
-            {CAMPOS.map(({ clave, label, ph }) => (
-              <div className="form-group" key={clave}>
-                <label className="form-label" htmlFor={clave}>{label}</label>
-                <input
-                  id={clave}
-                  className="form-input"
-                  placeholder={ph}
-                  value={form[clave]}
-                  onChange={set(clave)}
-                />
-              </div>
-            ))}
-            <button type="submit" className="btn btn-maron">
-              <IconPlusCircle size={16} />
-              Registrar Préstamo
-            </button>
-          </form>
-        </section>
+        <FormularioPrestamo key={seleccion ? `sel-${seleccion.id}` : 'libre'} seleccion={seleccion} />
 
         <section className="card activity-card">
           <div className="card-head">
@@ -123,8 +182,8 @@ export default function Dashboard() {
               <span>Estado</span>
               <span />
             </div>
-            {prestamos.map((p) => (
-              <div className="table-row" key={p.id}>
+            {filas.map((p) => (
+              <div className={`table-row${p.nuevo ? ' es-nuevo' : ''}`} key={p.id}>
                 <div>
                   <div className="strong">{p.alumno}</div>
                   <div className="muted-sm">{p.curso}</div>

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { LIBROS, CATEGORIAS, POR_PAGINA } from '../data/libros.js'
+import { useNavigate } from 'react-router-dom'
+import { CATEGORIAS, POR_PAGINA } from '../data/libros.js'
+import { useBiblioteca } from '../context/BibliotecaContext.jsx'
 import {
   IconSearch, IconPlus, IconCuadricula, IconLista, IconChevron,
   IconIzquierda, IconDerecha, IconTresPuntos,
@@ -24,6 +26,8 @@ function Portada({ libro }) {
 }
 
 export default function Catalogo() {
+  const { libros, setSeleccion } = useBiblioteca()
+  const navegar = useNavigate()
   const [busqueda, setBusqueda] = useState('')
   const [categoria, setCategoria] = useState('Todos')
   const [disponibilidad, setDisponibilidad] = useState('Todos')
@@ -32,14 +36,14 @@ export default function Catalogo() {
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
-    return LIBROS.filter((l) => {
-      if (q && ![l.titulo, l.autor, l.editorial].some((v) => v.toLowerCase().includes(q))) return false
+    return libros.filter((l) => {
+      if (q && ![l.titulo, l.autor, l.editorial, l.isbn].some((v) => v.toLowerCase().includes(q))) return false
       if (categoria !== 'Todos' && l.categoria !== categoria) return false
       if (disponibilidad === 'Disponible' && l.disponibles === 0) return false
       if (disponibilidad === 'En préstamo' && l.disponibles !== 0) return false
       return true
     })
-  }, [busqueda, categoria, disponibilidad])
+  }, [busqueda, categoria, disponibilidad, libros])
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const paginaActual = Math.min(pagina, totalPaginas)
@@ -132,17 +136,34 @@ export default function Catalogo() {
                 <span className="categoria">{l.categoria.toUpperCase()}</span>
                 <h3 className="libro-titulo">{l.titulo}</h3>
                 <div className="libro-autor">{l.autor}</div>
-                <div className="libro-editorial">{l.editorial}</div>
+                <div className="libro-editorial">
+                  {l.editorial}
+                  <span className="isbn">ISBN {l.isbn}</span>
+                </div>
                 <div className="libro-acciones">
                   {l.disponibles > 0 ? (
                     <span className="dispo">{l.disponibles} Disponibles</span>
                   ) : (
                     <span className="prestado">En Préstamo (0 disp.)</span>
                   )}
-                  <button className="btn btn-maron btn-sm" disabled={l.disponibles === 0}>
+                  <button
+                    className="btn btn-maron btn-sm"
+                    disabled={l.disponibles === 0}
+                    title={l.disponibles === 0 ? 'Sin ejemplares disponibles' : `Prestar ${l.titulo}`}
+                    onClick={() => {
+                      setSeleccion(l)
+                      navegar('/')
+                    }}
+                  >
                     Prestar
                   </button>
-                  <button className="btn btn-outline btn-icon" aria-label="Más opciones">
+                  <button
+                    className="btn btn-outline btn-icon"
+                    aria-label={`Ver ficha de ${l.titulo}`}
+                    onClick={() => {
+                      setBusqueda(l.isbn)
+                    }}
+                  >
                     <IconTresPuntos />
                   </button>
                 </div>

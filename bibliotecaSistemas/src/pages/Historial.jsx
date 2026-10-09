@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import {
-  MOVIMIENTOS, POR_PAGINA, MULTA_POR_DIA, PLAZO_DIAS,
-} from '../data/movimientos.js'
+import { POR_PAGINA, MULTA_POR_DIA, PLAZO_DIAS } from '../data/movimientos.js'
+import { useBiblioteca } from '../context/BibliotecaContext.jsx'
 import {
   IconSearch, IconCalendario, IconChevron, IconIzquierda, IconDerecha, IconOrden,
 } from '../components/Icons'
@@ -28,6 +27,7 @@ const aFecha = (f) => {
 }
 
 export default function Historial() {
+  const { movimientos: MOVIMIENTOS } = useBiblioteca()
   const [busqueda, setBusqueda] = useState('')
   const [desde, setDesde] = useState('2024-01-01')
   const [hasta, setHasta] = useState('2024-12-31')
@@ -55,7 +55,7 @@ export default function Historial() {
       if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * signo
       return String(va).localeCompare(String(vb), 'es') * signo
     })
-  }, [busqueda, desde, hasta, estados, orden])
+  }, [busqueda, desde, hasta, estados, orden, MOVIMIENTOS])
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const actual = Math.min(pagina, totalPaginas)
