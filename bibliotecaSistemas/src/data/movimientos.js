@@ -63,6 +63,30 @@ export const aTiempo = (f) => {
   return new Date(a, (m || 1) - 1, d || 1).getTime()
 }
 
+/** Valida "DD/MM/AAAA" y devuelve la fecha canónica, o null si no existe. */
+export function normalizarFecha(texto) {
+  const m = String(texto ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return null
+  const [, d, mes, a] = m.map(Number)
+  if (mes < 1 || mes > 12) return null
+  const f = new Date(a, mes - 1, d)
+  // Descarta Overflow, 31/02 y demás fechas que no existen.
+  if (f.getDate() !== d || f.getMonth() !== mes - 1 || f.getFullYear() !== a) return null
+  return `${dia(d)}/${dia(mes)}/${a}`
+}
+
+/** "DD/MM/AAAA" + n días -> "DD/MM/AAAA". */
+export function sumarDias(fecha, n) {
+  const t = aTiempo(fecha)
+  if (!Number.isFinite(t)) return fecha
+  const d = new Date(t)
+  d.setDate(d.getDate() + n)
+  return `${dia(d.getDate())}/${dia(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
+/** Hoy + n días, en el formato del historial. */
+export const desdeHoy = (n) => sumarDias(hoy(), n)
+
 /** Correlativo libre del historial, con el año del movimiento. */
 export function siguienteId(movimientos) {
   const numeros = movimientos.map((m) => Number(String(m.id).split('-P')[1])).filter(Number.isFinite)
@@ -119,6 +143,8 @@ export function crearMovimientos() {
       id: `2024-P${String(160 - i).padStart(3, '0')}`,
       tipo: 'prestamo',
       ...f,
+      // El plazo corre desde el préstamo, no desde la devolución real.
+      devolucionEstimada: sumarDias(f.fecha, PLAZO_DIAS),
       devolucionTexto: f.devolucion ?? 'Sin devolver',
       atrasoTexto: `${f.dias} ${f.dias === 1 ? 'día' : 'días'}`,
       sancion: multa > 0 ? 'Multa por retraso' : 'Sin sanción',
@@ -147,6 +173,7 @@ export function crearIngreso(libro, id) {
     editorial: libro.editorial.replace('Ed. ', 'Editorial '),
     fecha: hoy(),
     devolucion: null,
+    devolucionEstimada: null,
     dias: 0,
     estado: 'Ingresado',
     devolucionTexto: 'Sin devolver',

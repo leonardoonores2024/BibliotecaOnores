@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { crearCatalogo } from '../data/libros.js'
-import { crearMovimientos, crearIngreso, hoy, pesos, siguienteId, MULTA_POR_DIA } from '../data/movimientos.js'
+import { crearMovimientos, crearIngreso, hoy, pesos, siguienteId, sumarDias, MULTA_POR_DIA, PLAZO_DIAS } from '../data/movimientos.js'
 
 const BibliotecaContext = createContext(null)
 
@@ -54,8 +54,12 @@ export function BibliotecaProvider({ children }) {
     return { ok: false, error: `No existe ningún libro con el título o ISBN "${texto.trim()}".` }
   }, [libros])
 
-  /** Registra el préstamo: descuenta un ejemplar del catálogo y deja el movimiento en el historial. */
-  const prestar = useCallback(({ libro, alumno, curso, fecha }) => {
+  /**
+   * Registra el préstamo: descuenta un ejemplar del catálogo y deja el
+   * movimiento en el historial. El préstamo se fecha hoy y lo que se
+   * escribe es la devolución estimada (si viene vacía, corre el plazo).
+   */
+  const prestar = useCallback(({ libro, alumno, curso, devolucion }) => {
     setLibros((prev) => prev.map((l) => (l.id === libro.id ? { ...l, disponibles: l.disponibles - 1 } : l)))
 
     setMovimientos((prev) => [
@@ -66,8 +70,9 @@ export function BibliotecaProvider({ children }) {
         curso: curso?.trim() || 'Curso sin especificar',
         libro: libro.titulo,
         editorial: libro.editorial.replace('Ed. ', 'Editorial '),
-        fecha: fecha?.trim() || hoy(),
+        fecha: hoy(),
         devolucion: null,
+        devolucionEstimada: devolucion || sumarDias(hoy(), PLAZO_DIAS),
         dias: 0,
         estado: 'En Préstamo',
         devolucionTexto: 'Sin devolver',

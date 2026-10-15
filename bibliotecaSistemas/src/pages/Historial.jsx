@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   POR_PAGINA, MULTA_POR_DIA, PLAZO_DIAS, TIPOS_SANCION, limitesFechas, aTiempo, pesos,
 } from '../data/movimientos.js'
-import { useBiblioteca } from '../context/BibliotecaContext.jsx'
+import { useBiblioteca, fechaCorta } from '../context/BibliotecaContext.jsx'
 import Modal from '../components/Modal'
 import {
   IconSearch, IconCalendario, IconChevron, IconIzquierda, IconDerecha, IconOrden,
@@ -338,7 +338,12 @@ export default function Historial() {
                       <div>{m.libro}</div>
                       <div className="muted-sm">{m.editorial}</div>
                     </td>
-                    <td>{m.fecha}</td>
+                    <td>
+                      <div>{m.fecha}</div>
+                      {!ingreso && !m.devolucion && m.devolucionEstimada && (
+                        <div className="muted-sm">Vence {fechaCorta(m.devolucionEstimada)}</div>
+                      )}
+                    </td>
                     <td className="muted">{ingreso ? '—' : m.devolucionTexto}</td>
                     <td className={m.dias > 0 ? 'retraso' : 'muted'}>{ingreso ? '—' : m.atrasoTexto}</td>
                     <td><span className={`status ${CLASE[m.estado]}`}>{m.estado}</span></td>

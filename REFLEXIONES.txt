@@ -1,0 +1,19 @@
+¿Navegación clara? Sí. Son cuatro secciones fijas en la barra de al costado: Panel, Catálogo, Historial y Configuración. Nunca tenés que andar buscando dónde está cada cosa.
+
+¿Pasos de la tarea principal? Prestar un libro son dos pasos de verdad: llenar el formulario y confirmar. Pero si venís del Catálogo, el recorrido es buscar, tocar Prestar y pegar el salto al Panel, porque ahí está el formulario. Ese corte de pantalla es lo único que te rompe el ritmo.
+
+¿Se perdería? Poco. Cada pantalla tiene un título que dice lo que hace. Lo que sí puede marear es que “Agregar Nuevo Libro” esté solo en el Catálogo, y que la confirmación del préstamo sea un textito verde abajo del formulario que se pasa por alto.
+
+¿Mantiene el diseño? El esqueleto sí: mismas pantallas, mismas tarjetas, mismos colores y tipografías. Pero el diseño era estático y la app está viva. Hoy hay tres datos que quedaron clavados y no cierran con el diseño: en el Historial dice “Fecha de consulta: 31 de octubre de 2024” y “Corte: 31/10/2024”, y en Configuración el resumen muestra 40 libros y 160 registros, que son los valores de arranque y ya no coinciden con lo que cargaste.
+
+¿Flujo claro y rápido? Rápido, sí. Antes las métricas y la actividad reciente eran pura decoración; ahora salen del historial, así que cuando registrás un préstamo se actualiza todo de verdad y el mensaje te avisa cuándo vence.
+
+¿Qué mejoraría?
+
+Sacar las fechas fijas del Historial y del resumen de Configuración.
+Que el plazo y la multa de Configuración impacten de verdad: hoy los podés editar, pero el resto de la app sigue usando $ 100 y 14 días fijos.
+Que prestar desde el Catálogo no te saque de la pantalla.
+
+La reflexión
+
+Pasar de prototipo a código es darte cuenta de que el diseño sirve para dibujar, no para operar. En el mock había botones que no hacían nada y textos fijos que parecían de relleno. En Figma eso se ve perfecto, pero en la app miente: el “Corte 31/10/2024” no cambia nunca. Lo que más me costó fue entender que decorar y calcular no son lo mismo. Un número dibujado en Figma es información; ese mismo número calculado en React es un compromiso. Por eso sacar los datos falsos no es ser quisquilloso, es arreglar la maqueta. La versión final no se parece menos al diseño: se parece al diseño después de que la app dejó de mentir tanto.

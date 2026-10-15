@@ -177,6 +177,7 @@ button, input, select { font-family: inherit; }
 .badge-pink { background: var(--pink-2); color: var(--maroon-deep); }
 .badge-gray { background: var(--field); color: #374151; }
 .badge-red { background: #fee2e2; color: #b42318; }
+.badge-green { background: #dcfce7; color: var(--green); }
 
 /* ============================================================
    Panel principal
@@ -199,6 +200,7 @@ button, input, select { font-family: inherit; }
 }
 .form-input::placeholder { color: var(--muted-2); }
 .form-input:focus { border-color: var(--tan-soft); }
+.form-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
 .activity-card { display: flex; flex-direction: column; gap: 20px; }
 .table { display: flex; flex-direction: column; }

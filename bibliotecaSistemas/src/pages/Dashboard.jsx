@@ -1,35 +1,77 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IconLibro, IconHistorial, IconAlerta, IconPlusCircle, IconTresPuntos,
 } from '../components/Icons'
+import { hoy, sumarDias, normalizarFecha, aTiempo, PLAZO_DIAS } from '../data/movimientos.js'
 import { useBiblioteca, fechaCorta } from '../context/BibliotecaContext.jsx'
 
-const PRESTAMOS_MAQUETA = [
-  { id: 'p1', alumno: 'Tomás Giménez', curso: '4to Año A', libro: 'Rayuela', fecha: '24 Oct 2024', estado: 'Entregado', clase: 'entregado' },
-  { id: 'p2', alumno: 'Valentina Ortiz', curso: '6to Año B', libro: 'Don Quijote', fecha: '23 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
-  { id: 'p3', alumno: 'Mateo Silva', curso: '3er Año C', libro: 'El Principito', fecha: '18 Oct 2024', estado: 'Vencido', clase: 'vencido' },
-  { id: 'p4', alumno: 'Camila Franco', curso: '5to Año A', libro: 'Fahrenheit 451', fecha: '22 Oct 2024', estado: 'Entregado', clase: 'entregado' },
-  { id: 'p5', alumno: 'Bautista Herrera', curso: '2do Año B', libro: 'La Sombra del Viento', fecha: '21 Oct 2024', estado: 'En Préstamo', clase: 'prestamo' },
-]
+// Cuántos movimientos se listan en "Actividad reciente".
+const ACTIVIDAD_RECIENTE = 10
 
-const METRICAS = [
-  { label: 'Préstamos de Libros', valor: '34', badge: 'Hoy +4', clase: 'badge-pink', Icon: IconLibro },
-  { label: 'Libros en Préstamo', valor: '18', badge: 'Estable', clase: 'badge-gray', Icon: IconLibro },
-  { label: 'Devoluciones Pendientes', valor: '7', badge: 'Esta semana', clase: 'badge-gray', Icon: IconHistorial },
-  { label: 'Libros Vencidos', valor: '2', badge: 'Atención', clase: 'badge-red', Icon: IconAlerta },
-]
+// Ventana para el badge de devoluciones: hoy y los próximos 7 días.
+const DIAS_VIGENCIA = 7
+
+/**
+ * Las cuatro tarjetas se calculan con el historial general: los ingresos de
+ * catálogo no son préstamos, así que quedan afuera del conteo.
+ */
+function useMetricas(movimientos) {
+  return useMemo(() => {
+    const prestamos = movimientos.filter((m) => m.tipo !== 'ingreso')
+    const delDia = prestamos.filter((m) => m.fecha === hoy()).length
+    const enPrestamo = prestamos.filter((m) => m.estado === 'En Préstamo').length
+    const vencidos = prestamos.filter((m) => m.estado === 'Vencido').length
+    const sinDevolver = [...prestamos.filter((m) => m.estado === 'En Préstamo'), ...prestamos.filter((m) => m.estado === 'Vencido')]
+    const pendientes = sinDevolver.length
+
+    // De lo que falta devolver, lo que vence hoy o dentro de una semana.
+    const limite = aTiempo(sumarDias(hoy(), DIAS_VIGENCIA))
+    const porVencer = sinDevolver.filter((m) => aTiempo(m.devolucionEstimada ?? m.fecha) <= limite).length
+
+    return [
+      {
+        label: 'Préstamos de Libros',
+        valor: String(prestamos.length),
+        badge: delDia > 0 ? `Hoy +${delDia}` : 'Sin préstamos hoy',
+        clase: delDia > 0 ? 'badge-pink' : 'badge-gray',
+        Icon: IconLibro,
+      },
+      {
+        label: 'Libros en Préstamo',
+        valor: String(enPrestamo),
+        badge: vencidos === 0 ? 'Estable' : `${vencidos} en atraso`,
+        clase: vencidos === 0 ? 'badge-gray' : 'badge-red',
+        Icon: IconLibro,
+      },
+      {
+        label: 'Devoluciones Pendientes',
+        valor: String(pendientes),
+        badge: pendientes === 0 ? 'Todo devuelto' : porVencer > 0 ? 'Esta semana' : 'Sin novedad',
+        clase: pendientes === 0 ? 'badge-green' : porVencer > 0 ? 'badge-pink' : 'badge-gray',
+        Icon: IconHistorial,
+      },
+      {
+        label: 'Libros Vencidos',
+        valor: String(vencidos),
+        badge: vencidos === 0 ? 'Al día' : 'Atención',
+        clase: vencidos === 0 ? 'badge-green' : 'badge-red',
+        Icon: IconAlerta,
+      },
+    ]
+  }, [movimientos])
+}
 
 const CAMPOS = [
   { clave: 'alumno', label: 'Nombre y Apellido del Alumno', ph: 'Ej. Sofía Rodríguez' },
   { clave: 'curso', label: 'Curso / Año', ph: 'Ej. 5to Año Ciencias Naturales' },
   { clave: 'libro', label: 'Código ISBN / Título del Libro', ph: 'Ej. Cien años de soledad / ISBN-978-3-16' },
-  { clave: 'fecha', label: 'Fecha de Devolución Estimada', ph: 'DD / MM / AAAA' },
+  { clave: 'devolucion', label: 'Fecha de Devolución Estimada', ph: 'DD / MM / AAAA', pista: true },
 ]
 
 const CLASE = { 'En Préstamo': 'prestamo', Entregado: 'entregado', Vencido: 'vencido', Ingresado: 'ingresado' }
 
-const VACIO = { alumno: '', curso: '', libro: '', fecha: '' }
+const VACIO = { alumno: '', curso: '', libro: '', devolucion: '' }
 
 /**
  * Formulario de préstamo. Se monta con `key` según la selección para que
@@ -66,11 +108,20 @@ function FormularioPrestamo({ seleccion }) {
       return
     }
 
+    // La fecha es opcional: si viene vacía corre el plazo de 14 días.
+    const escrita = form.devolucion.trim()
+    const estimada = escrita ? normalizarFecha(escrita) : null
+    if (escrita && !estimada) {
+      setAviso({ tipo: 'error', texto: 'Fecha inválida. Usá el formato DD / MM / AAAA (ej. 28 / 11 / 2026).' })
+      return
+    }
+
     const restantes = r.libro.disponibles - 1
-    prestar({ libro: r.libro, alumno: form.alumno.trim(), curso: form.curso, fecha: form.fecha })
+    const vence = fechaCorta(estimada || sumarDias(hoy(), PLAZO_DIAS))
+    prestar({ libro: r.libro, alumno: form.alumno.trim(), curso: form.curso, devolucion: estimada })
     setAviso({
       tipo: 'ok',
-      texto: `Préstamo registrado: "${r.libro.titulo}" — quedan ${restantes} disponibles.`,
+      texto: `Préstamo registrado: "${r.libro.titulo}" — quedan ${restantes} disponibles. Vence el ${vence}.`,
     })
     setForm(VACIO)
     setPreseleccionActiva(false)
@@ -83,7 +134,7 @@ function FormularioPrestamo({ seleccion }) {
       <hr className="rule" />
 
       <form className="form-fields" onSubmit={enviar}>
-        {CAMPOS.map(({ clave, label, ph }) => (
+        {CAMPOS.map(({ clave, label, ph, pista }) => (
           <div className="form-group" key={clave}>
             <label className="form-label" htmlFor={clave}>{label}</label>
             <input
@@ -93,6 +144,11 @@ function FormularioPrestamo({ seleccion }) {
               value={form[clave]}
               onChange={set(clave)}
             />
+            {pista && (
+              <span className="form-hint">
+                Opcional. Si lo dejás vacío, vence el {fechaCorta(sumarDias(hoy(), PLAZO_DIAS))} ({PLAZO_DIAS} días).
+              </span>
+            )}
           </div>
         ))}
 
@@ -119,20 +175,19 @@ function FormularioPrestamo({ seleccion }) {
 
 export default function Dashboard() {
   const { movimientos, seleccion } = useBiblioteca()
+  const METRICAS = useMetricas(movimientos)
 
-  const filas = [
-    ...movimientos.slice(0, 5).map((m) => ({
-      id: m.id,
-      alumno: m.alumno,
-      curso: m.curso,
-      libro: m.libro,
-      fecha: fechaCorta(m.fecha),
-      estado: m.estado,
-      clase: CLASE[m.estado] ?? 'prestamo',
-      nuevo: true,
-    })),
-    ...PRESTAMOS_MAQUETA,
-  ]
+  // Mismos movimientos que muestra el historial: nada de filas sueltas acá.
+  const filas = useMemo(() => movimientos.slice(0, ACTIVIDAD_RECIENTE).map((m) => ({
+    id: m.id,
+    alumno: m.alumno,
+    curso: m.curso,
+    libro: m.libro,
+    fecha: fechaCorta(m.fecha),
+    estado: m.estado,
+    clase: CLASE[m.estado] ?? 'prestamo',
+    nuevo: !!m.esNuevo,
+  })), [movimientos])
 
   return (
     <main className="main main-dashboard">
