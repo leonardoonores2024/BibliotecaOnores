@@ -122,6 +122,26 @@ export const IconOrden = (p) => (
   </Svg>
 )
 
+export const IconCerrar = (p) => (
+  <Svg {...p}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </Svg>
+)
+
+export const IconCheck = (p) => (
+  <Svg {...p}>
+    <path d="M20 6 9 17l-5-5" />
+  </Svg>
+)
+
+export const IconGato = (p) => (
+  <Svg {...p}>
+    <path d="M6 7v3M18 7v3" />
+    <path d="M12 20c4.4 0 7-3 7-7 0-2.5-.9-4.6-2.4-6.2L18 5l-3 1.5A9 9 0 0 0 12 6c-1 0-2 .2-3 .5L6 5l1.4 1.8C5.9 8.4 5 10.5 5 13c0 4 2.6 7 7 7z" />
+    <path d="M10 13h.01M14 13h.01" strokeWidth="2.5" />
+  </Svg>
+)
+
 export const IconTresPuntos = (p) => (
   <Svg {...p} size={p.size ?? 16} fill="currentColor" stroke="none">
     <circle cx="5" cy="12" r="1.8" />

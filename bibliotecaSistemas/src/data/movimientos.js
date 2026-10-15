@@ -30,10 +30,65 @@ export const TOTAL_PAGINAS_HISTORIAL = Math.ceil(TOTAL_REGISTROS / POR_PAGINA)
 export const MULTA_POR_DIA = 100
 export const PLAZO_DIAS = 14
 
+/** Sanciones que un bibliotecario puede aplicar a un préstamo vencido. */
+export const TIPOS_SANCION = [
+  'Suspensión de préstamo',
+  'Recargo Brou',
+  'Reparación del ejemplar',
+  'Aviso al tutor',
+  'Retención del material',
+]
+
 const dia = (n) => String(n).padStart(2, '0')
 
 // Formato de moneda es-AR: "$ 1.400"
-const pesos = (n) => '$ ' + new Intl.NumberFormat('es-AR').format(n)
+export const pesos = (n) => '$ ' + new Intl.NumberFormat('es-AR').format(n)
+
+/** Fecha de hoy en el mismo formato que usa el historial: "DD/MM/AAAA". */
+export const hoy = () => {
+  const d = new Date()
+  return `${dia(d.getDate())}/${dia(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
+/** "DD/MM/AAAA" -> "AAAA-MM-DD" (para los <input type="date">). */
+export const aIso = (f) => {
+  const [d, m, a] = String(f).split('/').map(Number)
+  if (!d || !m || !a) return f
+  return `${a}-${dia(m)}-${dia(d)}`
+}
+
+/** "DD/MM/AAAA" -> timestamp (para ordenar y filtrar). */
+export const aTiempo = (f) => {
+  const [d, m, a] = String(f).split('/').map(Number)
+  return new Date(a, (m || 1) - 1, d || 1).getTime()
+}
+
+/** Correlativo libre del historial, con el año del movimiento. */
+export function siguienteId(movimientos) {
+  const numeros = movimientos.map((m) => Number(String(m.id).split('-P')[1])).filter(Number.isFinite)
+  const siguiente = (numeros.length ? Math.max(...numeros) : 0) + 1
+  return `${hoy().slice(-4)}-P${String(siguiente).padStart(3, '0')}`
+}
+
+/** timestamp -> "AAAA-MM-DD" (para los <input type="date">). */
+const isoDe = (t) => {
+  const d = new Date(t)
+  return `${d.getFullYear()}-${dia(d.getMonth() + 1)}-${dia(d.getDate())}`
+}
+
+/** Rango mínimo/máximo de fechas presente en el historial. */
+export function limitesFechas(movimientos) {
+  let min = Infinity
+  let max = -Infinity
+  for (const m of movimientos) {
+    const t = aTiempo(m.fecha)
+    if (!Number.isFinite(t)) continue
+    if (t < min) min = t
+    if (t > max) max = t
+  }
+  if (min === Infinity) return { desde: isoDe(Date.now()), hasta: isoDe(Date.now()) }
+  return { desde: isoDe(min), hasta: isoDe(max) }
+}
 
 /** Genera los 160 movimientos de forma determinista. */
 export function crearMovimientos() {
@@ -62,6 +117,7 @@ export function crearMovimientos() {
     const multa = f.dias * MULTA_POR_DIA
     return {
       id: `2024-P${String(160 - i).padStart(3, '0')}`,
+      tipo: 'prestamo',
       ...f,
       devolucionTexto: f.devolucion ?? 'Sin devolver',
       atrasoTexto: `${f.dias} ${f.dias === 1 ? 'día' : 'días'}`,
@@ -74,8 +130,34 @@ export function crearMovimientos() {
             : `No - ${pesos(multa)} pendiente`,
       multa,
       multaPagada: multa > 0 && f.estado === 'Entregado',
+      // Todavía no tiene una sanción cargada por el bibliotecario.
+      sancionado: false,
     }
   })
+}
+
+/** Movimiento de alta de un ejemplar en el catálogo. */
+export function crearIngreso(libro, id) {
+  return {
+    id,
+    tipo: 'ingreso',
+    alumno: 'Sin asignar',
+    curso: 'Alta en catálogo',
+    libro: libro.titulo,
+    editorial: libro.editorial.replace('Ed. ', 'Editorial '),
+    fecha: hoy(),
+    devolucion: null,
+    dias: 0,
+    estado: 'Ingresado',
+    devolucionTexto: 'Sin devolver',
+    atrasoTexto: '0 días',
+    sancion: 'No aplica',
+    multaTexto: 'No aplica',
+    multa: 0,
+    multaPagada: false,
+    sancionado: false,
+    esNuevo: true,
+  }
 }
 
 export const MOVIMIENTOS = crearMovimientos()

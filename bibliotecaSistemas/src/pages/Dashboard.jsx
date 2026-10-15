@@ -27,7 +27,7 @@ const CAMPOS = [
   { clave: 'fecha', label: 'Fecha de Devolución Estimada', ph: 'DD / MM / AAAA' },
 ]
 
-const CLASE = { 'En Préstamo': 'prestamo', Entregado: 'entregado', Vencido: 'vencido' }
+const CLASE = { 'En Préstamo': 'prestamo', Entregado: 'entregado', Vencido: 'vencido', Ingresado: 'ingresado' }
 
 const VACIO = { alumno: '', curso: '', libro: '', fecha: '' }
 
